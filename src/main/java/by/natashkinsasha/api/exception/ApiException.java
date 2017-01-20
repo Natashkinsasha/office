@@ -1,4 +1,4 @@
-package by.natashkinsasha.api.Exception;
+package by.natashkinsasha.api.exception;
 
 public class ApiException extends Exception{
     private int code;

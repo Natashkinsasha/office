@@ -1,6 +1,4 @@
-package by.natashkinsasha.api.Exception;
-
-import by.natashkinsasha.api.Exception.ApiException;
+package by.natashkinsasha.api.exception;
 
 public class NotFoundException extends ApiException {
     private int code;
