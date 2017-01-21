@@ -36,7 +36,7 @@ public class BookingRequestApiTest {
     public void testPostBookingRequestCreateWithArrayTime() throws JsonProcessingException {
         HttpEntity<String> httpEntity = new HttpEntity<String>("[]");
         ResponseEntity<String> entity = this.restTemplate
-                .postForEntity("/bookingRequest/createWithArray/3453", httpEntity,String.class);
+                .postForEntity("/bookingRequest/createWithArray?startWorkTime=5677&finishWorkTime=57476", httpEntity,String.class);
         assertThat(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(entity.getBody()).isEqualTo("[]");
 

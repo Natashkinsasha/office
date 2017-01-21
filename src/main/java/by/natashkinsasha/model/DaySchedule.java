@@ -1,28 +1,32 @@
 package by.natashkinsasha.model;
 
-import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDate;
+
+import by.natashkinsasha.api.conventer.DayScheduleConverter;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 
 
 
 
-
+@Data
+@JsonSerialize(using = DayScheduleConverter.Serializer.class)
 public class DaySchedule   {
-  @JsonProperty("date")
-  private Long date;
-  @JsonProperty("reservations")
+  private LocalDate date;
   private List<Reservations> reservations = new ArrayList<Reservations>();
 
   public DaySchedule() {
   }
 
-  public Long getDate() {
+
+  public LocalDate getDate() {
     return date;
   }
 
-  public void setDate(Long date) {
+  public void setDate(LocalDate date) {
     this.date = date;
   }
 

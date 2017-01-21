@@ -1,46 +1,47 @@
 package by.natashkinsasha.model;
 
-import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalTime;
+
+import by.natashkinsasha.api.conventer.ReservationsConverter;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Data;
 
 
 
-
-
-
+@Data
+@JsonSerialize(using = ReservationsConverter.Serializer.class)
 public class Reservations   {
-  @JsonProperty("date")
-  private Long date = null;
-  @JsonProperty("startDuration")
-  private Long startDuration = null;
-  @JsonProperty("finishDuration")
-  private Long finishDuration = null;
+
+  private LocalTime startDuration;
+  private LocalTime finishDuration;
+  private String userId;
 
   public Reservations() {
   }
 
-  public Long getDate() {
-    return date;
-  }
 
-  public void setDate(Long date) {
-    this.date = date;
-  }
-
-  public Long getStartDuration() {
+  public LocalTime getStartDuration() {
     return startDuration;
   }
 
-  public void setStartDuration(Long startDuration) {
+  public void setStartDuration(LocalTime startDuration) {
     this.startDuration = startDuration;
   }
 
-  public Long getFinishDuration() {
+  public LocalTime getFinishDuration() {
     return finishDuration;
   }
 
-  public void setFinishDuration(Long finishDuration) {
+  public void setFinishDuration(LocalTime finishDuration) {
     this.finishDuration = finishDuration;
+  }
+
+  public String getUserId() {
+    return userId;
+  }
+
+  public void setUserId(String userId) {
+    this.userId = userId;
   }
 }
 
