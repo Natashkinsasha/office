@@ -5,32 +5,58 @@ import by.natashkinsasha.model.BookingRequest;
 import by.natashkinsasha.model.DaySchedule;
 import by.natashkinsasha.model.Reservations;
 import by.natashkinsasha.model.comparator.ComparatorBookingRequestByBookingDate;
+import by.natashkinsasha.util.TimeUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ScheduleServiceImpl implements ScheduleService {
-
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public DaySchedule[] create(LocalTime startWorktime, LocalTime finishWorkTime, BookingRequest[] bookingRequests) {
-        List<BookingRequest> bookingRequestList = Arrays.stream(bookingRequests).parallel().filter(bookingRequest ->
-                ((bookingRequest.getStartSubmissionTime().toLocalTime().isAfter(startWorktime)) && (bookingRequest.getFinishSubmissionTime().toLocalTime().isBefore(finishWorkTime))))
-                .sorted(new ComparatorBookingRequestByBookingDate()).collect(Collectors.toList());
-        for (int i = 1; i < bookingRequestList.size(); i++) {
-            if (bookingRequestList.get(i - 1).getFinishSubmissionTime().isAfter(bookingRequestList.get(i).getStartSubmissionTime())) {
-                bookingRequestList.remove(i);
-                i--;
+        List<BookingRequest> bookingRequestList = removeOutWork(bookingRequests, startWorktime, finishWorkTime);
+        bookingRequestList = removeOverlapping(bookingRequestList);
+        DaySchedule[] daySchedules = shapeSchedules(bookingRequestList);
+        return daySchedules;
+    }
+
+
+    private List<BookingRequest> removeOverlapping(List<BookingRequest> bookingRequestList) {
+        bookingRequestList.sort(new ComparatorBookingRequestByBookingDate());
+        int size = bookingRequestList.size();
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = i + 1; j < size; j++) {
+                if (bookingRequestList.get(j).isOverlapping(bookingRequestList.get(i))) {
+                    bookingRequestList.remove(j);
+                    j--;
+                    size--;
+                }
             }
         }
+        return bookingRequestList;
+    }
+
+    private List<BookingRequest> removeOutWork(BookingRequest[] bookingRequests, LocalTime startWorktime, LocalTime finishWorkTime) {
+        return Arrays.stream(bookingRequests).parallel().filter(bookingRequest ->
+                ((!bookingRequest.getStartSubmissionTime().toLocalTime().isBefore(startWorktime)) && (!bookingRequest.getFinishSubmissionTime().toLocalTime().isAfter(finishWorkTime))))
+                .collect(Collectors.toList());
+    }
+
+    private DaySchedule[] shapeSchedules(List<BookingRequest> bookingRequestList) {
         Map<LocalDate, List<BookingRequest>> groupByLocalDateStartSubmissionTime = bookingRequestList.parallelStream().collect(Collectors.groupingBy((bookingRequest) -> bookingRequest.getStartSubmissionTime().toLocalDate()));
-        List<DaySchedule> dayScheduleList = groupByLocalDateStartSubmissionTime.entrySet().parallelStream().map(entry -> {
+        DaySchedule[] daySchedules = groupByLocalDateStartSubmissionTime.entrySet().parallelStream().map(entry -> {
             DaySchedule daySchedule = new DaySchedule();
             daySchedule.setDate(entry.getKey());
             List<Reservations> reservationsList = entry.getValue().parallelStream().map(bookingRequest -> {
@@ -42,7 +68,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             }).collect(Collectors.toList());
             daySchedule.setReservations(reservationsList);
             return daySchedule;
-        }).collect(Collectors.toList());
-        return dayScheduleList.toArray(new DaySchedule[dayScheduleList.size()]);
+        }).toArray(DaySchedule[]::new);
+        return daySchedules;
     }
 }

@@ -29,9 +29,7 @@ public class BookingRequestApi  {
     @Consumes({MediaType.APPLICATION_JSON+ ";charset=utf-8"})
     @Produces({MediaType.APPLICATION_JSON+ ";charset=utf-8"})
     public DaySchedule[] postBookingRequestCreateWithArray(@QueryParam("startWorkTime") Long startWorkTime, @QueryParam("finishWorkTime") Long finishWorkTime, BookingRequest[] bookingRequests) throws by.natashkinsasha.api.exception.NotFoundException {
-        logger.debug(startWorkTime.toString());
-        logger.debug(finishWorkTime.toString());
-        logger.debug(bookingRequests.toString());
+        logger.debug("StartWorktine-{};FinishWorkTime-{};BokkingRequests", startWorkTime.toString(),finishWorkTime.toString(),bookingRequests.toString());
         return scheduleService.create(TimeUtil.toLocalTime(startWorkTime), TimeUtil.toLocalTime(finishWorkTime), bookingRequests);
     }
 }
