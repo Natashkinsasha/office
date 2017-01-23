@@ -1,24 +1,35 @@
 package by.natashkinsasha.model;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
-
 import by.natashkinsasha.api.conventer.BookingRequestConverter;
-import by.natashkinsasha.util.TimeUtil;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Future;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Past;
+import java.time.LocalDateTime;
 
 
 @Data
 @JsonDeserialize(using = BookingRequestConverter.Deserializer.class)
 public class BookingRequest {
+    @NotNull
     private LocalDateTime bookingDateTime;
+    @NotNull
     private String userId;
+    @NotNull
     private LocalDateTime startSubmissionTime;
+    @NotNull
     private LocalDateTime finishSubmissionTime;
 
-
     public BookingRequest() {
+    }
+
+    @AssertTrue(message = "Start submission time should be before finish submission time")
+    private boolean isValid() {
+        return startSubmissionTime.isBefore(finishSubmissionTime)&&bookingDateTime.isBefore(startSubmissionTime);
     }
 
     public LocalDateTime getBookingDateTime() {

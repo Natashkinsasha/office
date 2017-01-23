@@ -5,6 +5,7 @@ import by.natashkinsasha.model.BookingRequest;
 import by.natashkinsasha.model.DaySchedule;
 import by.natashkinsasha.model.Reservations;
 import by.natashkinsasha.model.comparator.ComparatorBookingRequestByBookingDate;
+import by.natashkinsasha.model.comparator.ComparatorDayScheduleByData;
 import by.natashkinsasha.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +26,10 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public DaySchedule[] create(LocalTime startWorktime, LocalTime finishWorkTime, BookingRequest[] bookingRequests) {
+    public List<DaySchedule> create(LocalTime startWorktime, LocalTime finishWorkTime, List<BookingRequest> bookingRequests) {
         List<BookingRequest> bookingRequestList = removeOutWork(bookingRequests, startWorktime, finishWorkTime);
         bookingRequestList = removeOverlapping(bookingRequestList);
-        DaySchedule[] daySchedules = shapeSchedules(bookingRequestList);
+        List<DaySchedule> daySchedules = shapeSchedules(bookingRequestList);
         return daySchedules;
     }
 
@@ -48,15 +49,15 @@ public class ScheduleServiceImpl implements ScheduleService {
         return bookingRequestList;
     }
 
-    private List<BookingRequest> removeOutWork(BookingRequest[] bookingRequests, LocalTime startWorktime, LocalTime finishWorkTime) {
-        return Arrays.stream(bookingRequests).parallel().filter(bookingRequest ->
+    private List<BookingRequest> removeOutWork(List<BookingRequest> bookingRequests, LocalTime startWorktime, LocalTime finishWorkTime) {
+        return bookingRequests.parallelStream().filter(bookingRequest ->
                 ((!bookingRequest.getStartSubmissionTime().toLocalTime().isBefore(startWorktime)) && (!bookingRequest.getFinishSubmissionTime().toLocalTime().isAfter(finishWorkTime))))
                 .collect(Collectors.toList());
     }
 
-    private DaySchedule[] shapeSchedules(List<BookingRequest> bookingRequestList) {
+    private List<DaySchedule> shapeSchedules(List<BookingRequest> bookingRequestList) {
         Map<LocalDate, List<BookingRequest>> groupByLocalDateStartSubmissionTime = bookingRequestList.parallelStream().collect(Collectors.groupingBy((bookingRequest) -> bookingRequest.getStartSubmissionTime().toLocalDate()));
-        DaySchedule[] daySchedules = groupByLocalDateStartSubmissionTime.entrySet().parallelStream().map(entry -> {
+        List<DaySchedule> daySchedules = groupByLocalDateStartSubmissionTime.entrySet().parallelStream().map(entry -> {
             DaySchedule daySchedule = new DaySchedule();
             daySchedule.setDate(entry.getKey());
             List<Reservations> reservationsList = entry.getValue().parallelStream().map(bookingRequest -> {
@@ -68,7 +69,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             }).collect(Collectors.toList());
             daySchedule.setReservations(reservationsList);
             return daySchedule;
-        }).toArray(DaySchedule[]::new);
+        }).sorted(new ComparatorDayScheduleByData()).collect(Collectors.toList());
         return daySchedules;
     }
 }
